@@ -36,7 +36,7 @@ func (sap *SAP) AnnounceSAP() {
 		{
 			0x20,       // Flags
 			0x00,       // Authentication Length
-			0xff, 0xff, //Message Identifier Hash
+			0xff, 0xff, // Message Identifier Hash
 		},
 		hostAddress.To4(),         // Originating Source
 		[]byte("application/sdp"), // Payload Type
