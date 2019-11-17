@@ -42,7 +42,7 @@ func (sap *SAP) AnnounceSAP() {
 		[]byte("application/sdp"), // Payload Type
 		{0x00},                    // Blank
 	}
-	var header = []byte{}
+	var header []byte
 	for _, h := range headers {
 		header = append(header, h...)
 	}
