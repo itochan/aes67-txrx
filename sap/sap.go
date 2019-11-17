@@ -14,13 +14,16 @@ const (
 
 type SAP struct {
 	interfaceName    string
+	HostAddress      net.IP
 	MulticastAddress net.IPNet
 }
 
 func NewSAP(interfaceName string) *SAP {
+	hostAddress := getLocalIPv4Address(interfaceName).IP
 	multicastAddress := getUDPMulticastIP(interfaceName)
 	return &SAP{
 		interfaceName:    interfaceName,
+		HostAddress:      hostAddress,
 		MulticastAddress: multicastAddress,
 	}
 }
