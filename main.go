@@ -7,6 +7,7 @@ import (
 
 var (
 	interfaceName = flag.String("i", "", "Network interface")
+	transmitFile  = flag.String("f", "", "Transmit File")
 )
 
 func main() {
