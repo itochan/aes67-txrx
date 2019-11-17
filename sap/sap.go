@@ -106,7 +106,7 @@ func getLocalIPv4Address(interfaceName string) *net.IPNet {
 }
 
 func (sap *SAP) getUDPMulticastIP() net.IPNet {
-	ipAddr := getLocalIPv4Address(sap.interfaceName).IP
+	ipAddr := getLocalIPv4Address(sap.interfaceName).IP.To4()
 	return net.IPNet{
 		IP:   net.IPv4(239, 69, ipAddr[2], ipAddr[3]),
 		Mask: net.IPv4Mask(255, 254, 0, 0),
