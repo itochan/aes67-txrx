@@ -18,5 +18,5 @@ func main() {
 	sap.AnnounceSAP()
 
 	r := aes67.NewSender(sap.HostAddress, sap.MulticastAddress)
-	r.PlayFile(*transmitFile)
+	r.Play(*transmitFile)
 }

@@ -3,7 +3,7 @@ package aes67
 import (
 	"github.com/wernerd/GoRTP/src/net/rtp"
 	"net"
-	"strconv"
+	"os"
 	"time"
 )
 
@@ -39,7 +39,7 @@ func NewSender(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 	return &Sender{senderIP: senderIP, MulticastAddress: multicastAddress}
 }
 
-func (sender Sender) PlayFile(transmitFile string) {
+func (sender Sender) Play(transmitFile string) {
 	initialize()
 	localZone := ""
 	remoteZone := ""
@@ -68,7 +68,7 @@ func (sender Sender) PlayFile(transmitFile string) {
 
 	rsLocal.StartSession()
 
-	sendLocalToRemote()
+	playFile(transmitFile)
 	defer rsLocal.CloseRecv()
 }
 
@@ -79,21 +79,28 @@ func initialize() {
 	}
 }
 
-func sendLocalToRemote() {
+func playFile(transmitFile string) {
 	var cnt int
 	stamp := uint32(0)
+
+	const PCM24bit48kHz = 288
+	buf := make([]byte, PCM24bit48kHz)
+
+	file, _ := os.Open(transmitFile)
 	for {
+		n, _ := file.Read(buf)
+		if n == 0 {
+			file.Close()
+			break
+		}
+
 		rp := rsLocal.NewDataPacket(stamp)
-		rp.SetPayload(localPay[:])
+		rp.SetPayload(buf[:])
 		rp.SetPayloadType(PCM24)
 		rsLocal.WriteData(rp)
-		rp.Print(strconv.Itoa(cnt))
 		rp.FreePacket()
-		//if (cnt % 50) == 0 {
-		//	fmt.Printf("Local sent %d packets\n", cnt)
-		//}
 		cnt++
-		stamp += 160
-		time.Sleep(20e6)
+		stamp += 48
+		time.Sleep(1440 * time.Microsecond)
 	}
 }
