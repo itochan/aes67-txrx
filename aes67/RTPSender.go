@@ -46,7 +46,6 @@ func (sender Sender) Play(transmitFile string) {
 }
 
 func playFile(transmitFile string) {
-	var cnt int
 	stamp := uint32(0)
 
 	const PCM24bit48kHz = 288
@@ -59,14 +58,16 @@ func playFile(transmitFile string) {
 			file.Close()
 			break
 		}
-
-		rp := rsLocal.NewDataPacket(stamp)
-		rp.SetPayload(buf[:])
-		rp.SetPayloadType(PCM24)
-		rsLocal.WriteData(rp)
-		rp.FreePacket()
-		cnt++
+		go sendPacket(buf, stamp)
 		stamp += 48
 		time.Sleep(1440 * time.Microsecond)
 	}
+}
+
+func sendPacket(payload []byte, stamp uint32) {
+	rp := rsLocal.NewDataPacket(stamp)
+	rp.SetPayload(payload[:])
+	rp.SetPayloadType(PCM24)
+	rsLocal.WriteData(rp)
+	rp.FreePacket()
 }
