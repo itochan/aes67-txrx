@@ -38,7 +38,7 @@ func (sender Sender) Play(transmitFile string) {
 
 	rsLocal.AddRemote(&rtp.Address{transmitAddr.IP, aes67Port, aes67Port + 1, remoteZone})
 
-	strLocalIdx, _ := rsLocal.NewSsrcStreamOut(&rtp.Address{local.IP, aes67Port, aes67Port + 1, localZone}, 1020304, 4711)
+	strLocalIdx, _ := rsLocal.NewSsrcStreamOut(&rtp.Address{local.IP, aes67Port, aes67Port + 1, localZone}, 0, 0)
 	rsLocal.SsrcStreamOutForIndex(strLocalIdx).SetPayloadType(0)
 
 	rsLocal.StartSession()
