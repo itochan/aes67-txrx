@@ -1,9 +1,10 @@
 package aes67
 
 import (
+	"bytes"
 	"github.com/wernerd/GoRTP/src/net/rtp"
+	"io/ioutil"
 	"net"
-	"os"
 	"time"
 )
 
@@ -51,16 +52,17 @@ func playFile(transmitFile string) {
 	const PCM24bit48kHz = 288
 	buf := make([]byte, PCM24bit48kHz)
 
-	file, _ := os.Open(transmitFile)
+	file, _ := ioutil.ReadFile(transmitFile)
+	reader := bytes.NewReader(file)
+
 	for {
-		n, _ := file.Read(buf)
+		n, _ := reader.Read(buf)
 		if n == 0 {
-			file.Close()
 			break
 		}
 		go sendPacket(buf, stamp)
 		stamp += 48
-		time.Sleep(1440 * time.Microsecond)
+		time.Sleep(1000 * time.Microsecond)
 	}
 }
 
