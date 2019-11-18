@@ -59,10 +59,10 @@ func (sap *SAP) AnnounceSAP() {
 		fmt.Sprintf("s=%s\r\n", hostname) +
 		fmt.Sprintf("c=IN IP4 %s\r\n", sap.MulticastAddress.String()) +
 		"t=0 0\r\n" +
-		"a=clock-domain:PTPv2 0\r\n" +
-		"m=audio 5004 RTP/AVP 98\r\n" +
+		//"a=clock-domain:PTPv2 0\r\n" +
+		"m=audio 5004 RTP/AVP 97\r\n" +
 		fmt.Sprintf("c=IN IP4 %s\r\n", sap.MulticastAddress.String()) +
-		"a=rtpmap:98 L24/48000/2\r\n" +
+		"a=rtpmap:97 L24/48000/2\r\n" +
 		"a=sync-time:0\r\n" +
 		"a=framecount:48\r\n" +
 		"a=ptime:1\r\n" +
