@@ -2,7 +2,7 @@ package aes67
 
 import (
 	"bytes"
-	"github.com/wernerd/GoRTP/src/net/rtp"
+	"github.com/itochan/GoRTP/src/net/rtp"
 	"io/ioutil"
 	"net"
 	"time"
