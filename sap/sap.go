@@ -66,8 +66,9 @@ func (sap *SAP) AnnounceSAP() {
 		"a=sync-time:0\r\n" +
 		"a=framecount:48\r\n" +
 		"a=ptime:1\r\n" +
-		"a=mediaclk:direct=0\r\n" +
-		"a=ts-refclk:ptp=IEEE1588-2008:FF-FF-FF-FF-FF-FF-FF-FF:0\r\n" +
+		// "a=mediaclk:direct=\r\n" +
+		//fmt.Sprintf("a=mediaclk:direct=%d\r\n", time.Now().Unix()) +
+		//"a=ts-refclk:ptp=IEEE1588-2008:00-1D-C1-FF-FE-18-E3-24:0\r\n" +
 		"a=recvonly\r\n"
 
 	fmt.Println()

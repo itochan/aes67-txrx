@@ -55,7 +55,8 @@ func playFile(transmitFile string) {
 	file, _ := ioutil.ReadFile(transmitFile)
 	reader := bytes.NewReader(file)
 
-	t := time.NewTicker(1000 * time.Microsecond)
+	const tickTime = 1 * time.Millisecond
+	t := time.NewTicker(tickTime)
 	for {
 		n, _ := reader.Read(buf)
 		if n == 0 {
