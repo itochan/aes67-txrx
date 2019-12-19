@@ -8,17 +8,6 @@ import (
 	"time"
 )
 
-const (
-	aes67Port = 5004
-	PCM24     = 0x61
-)
-
-var (
-	rsLocal    *rtp.Session
-	localZone  = ""
-	remoteZone = ""
-)
-
 type Sender struct {
 	senderIP         net.IP
 	MulticastAddress net.IPNet
