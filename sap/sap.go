@@ -13,17 +13,24 @@ const (
 )
 
 type SAP struct {
-	interfaceName string
+	interfaceName    string
+	HostAddress      net.IP
+	MulticastAddress net.IPNet
 }
 
 func NewSAP(interfaceName string) *SAP {
-	return &SAP{interfaceName: interfaceName}
+	hostAddress := getLocalIPv4Address(interfaceName).IP
+	multicastAddress := getUDPMulticastIP(interfaceName)
+	return &SAP{
+		interfaceName:    interfaceName,
+		HostAddress:      hostAddress,
+		MulticastAddress: multicastAddress,
+	}
 }
 
 func (sap *SAP) AnnounceSAP() {
 	fmt.Println("Announce SAP...")
-	multicastAddress := sap.getUDPMulticastIP()
-	fmt.Printf("Multicast Address: %s:%d\n", multicastAddress.IP.String(), sapAnnouncePort)
+	fmt.Printf("Multicast Address: %s:%d\n", sap.MulticastAddress.IP.String(), sapAnnouncePort)
 
 	hostAddress := getLocalIPv4Address(sap.interfaceName).IP
 	hostname, err := os.Hostname()
@@ -50,17 +57,18 @@ func (sap *SAP) AnnounceSAP() {
 	manifest := "v=0\r\n" +
 		fmt.Sprintf("o=- 4 0 IN IP4 %s\r\n", hostAddress) +
 		fmt.Sprintf("s=%s\r\n", hostname) +
-		fmt.Sprintf("c=IN IP4 %s\r\n", multicastAddress.String()) +
+		fmt.Sprintf("c=IN IP4 %s\r\n", sap.MulticastAddress.String()) +
 		"t=0 0\r\n" +
-		"a=clock-domain:PTPv2 0\r\n" +
-		"m=audio 5004 RTP/AVP 98\r\n" +
-		fmt.Sprintf("c=IN IP4 %s\r\n", multicastAddress.String()) +
-		"a=rtpmap:98 L24/48000/2\r\n" +
+		//"a=clock-domain:PTPv2 0\r\n" +
+		"m=audio 5004 RTP/AVP 97\r\n" +
+		fmt.Sprintf("c=IN IP4 %s\r\n", sap.MulticastAddress.String()) +
+		"a=rtpmap:97 L24/48000/2\r\n" +
 		"a=sync-time:0\r\n" +
 		"a=framecount:48\r\n" +
 		"a=ptime:1\r\n" +
-		"a=mediaclk:direct=0\r\n" +
-		"a=ts-refclk:ptp=IEEE1588-2008:FF-FF-FF-FF-FF-FF-FF-FF:0\r\n" +
+		// "a=mediaclk:direct=\r\n" +
+		//fmt.Sprintf("a=mediaclk:direct=%d\r\n", time.Now().Unix()) +
+		//"a=ts-refclk:ptp=IEEE1588-2008:00-1D-C1-FF-FE-18-E3-24:0\r\n" +
 		"a=recvonly\r\n"
 
 	fmt.Println()
@@ -105,8 +113,8 @@ func getLocalIPv4Address(interfaceName string) *net.IPNet {
 	return nil
 }
 
-func (sap *SAP) getUDPMulticastIP() net.IPNet {
-	ipAddr := getLocalIPv4Address(sap.interfaceName).IP.To4()
+func getUDPMulticastIP(interfaceName string) net.IPNet {
+	ipAddr := getLocalIPv4Address(interfaceName).IP.To4()
 	return net.IPNet{
 		IP:   net.IPv4(239, 69, ipAddr[2], ipAddr[3]),
 		Mask: net.IPv4Mask(255, 254, 0, 0),
