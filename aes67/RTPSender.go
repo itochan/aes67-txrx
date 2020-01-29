@@ -2,10 +2,14 @@ package aes67
 
 import (
 	"bytes"
-	"github.com/itochan/GoRTP/src/net/rtp"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"time"
+
+	"github.com/pion/rtp"
+	"github.com/pion/rtp/codecs"
 )
 
 type Sender struct {
@@ -18,45 +22,35 @@ func NewSender(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 }
 
 func (sender Sender) Play(transmitFile string) {
-	local := &net.IPAddr{IP: sender.senderIP}
-	transmitAddr, _ := net.ResolveIPAddr("ip", sender.MulticastAddress.IP.String())
-
-	tpLocal, _ := rtp.NewTransportUDP(local, aes67Port, localZone)
-
-	rsLocal = rtp.NewSession(tpLocal, tpLocal)
-
-	rsLocal.AddRemote(&rtp.Address{transmitAddr.IP, aes67Port, aes67Port + 1, remoteZone})
-
-	strLocalIdx, _ := rsLocal.NewSsrcStreamOut(&rtp.Address{local.IP, aes67Port, aes67Port + 1, localZone}, 0, 0)
-	rsLocal.SsrcStreamOutForIndex(strLocalIdx).SetPayloadType(0)
-
-	rsLocal.StartSession()
 	playFile(transmitFile)
-	defer rsLocal.CloseRecv()
 }
 
 func playFile(transmitFile string) {
-	stamp := uint32(0)
-
-	const PCM24bit48kHz = 288
+	const PCM24bit48kHz = 144
 	buf := make([]byte, PCM24bit48kHz)
 
 	file, _ := ioutil.ReadFile(transmitFile)
 	reader := bytes.NewReader(file)
 
+	packetizer := rtp.NewPacketizer(1452, 97, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewRandomSequencer(), 90000)
+
 	const tickTime = 1 * time.Millisecond
 	t := time.NewTicker(tickTime)
+
+	start := time.Now()
 	for {
 		n, _ := reader.Read(buf)
 		if n == 0 {
 			break
 		}
+		packet := packetizer.Packetize(buf, 480)
 		select {
 		case <-t.C:
-			go sendPacket(buf, stamp)
-			stamp += 48
+			fmt.Print(packet[0].String())
 		}
 	}
+	elapsed := time.Since(start)
+	log.Printf("Send RTP Packet %s", elapsed)
 }
 
 func sendPacket(payload []byte, stamp uint32) {
