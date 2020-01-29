@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"net"
+
 	"github.com/itochan/aes67-transmitter/aes67"
 	"github.com/itochan/aes67-transmitter/sap"
 )
@@ -19,7 +21,7 @@ func main() {
 	sap := sap.NewSAP(*interfaceName)
 	switch *mode {
 	case "receive":
-		r := aes67.NewReceiver(sap.HostAddress, sap.MulticastAddress)
+		r := aes67.NewReceiver(sap.HostAddress, net.ParseIP(*address))
 		r.Receive()
 		break
 	case "transmit":

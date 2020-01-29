@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 
 	"github.com/pion/rtp"
 )
 
 type Receiver struct {
-	senderIP         net.IP
-	MulticastAddress net.IPNet
+	localIP  net.IP
+	remoteIP net.IP
 }
 
-func NewReceiver(senderIP net.IP, multicastAddress net.IPNet) *Sender {
-	return &Sender{senderIP: senderIP, MulticastAddress: multicastAddress}
+func NewReceiver(localIP net.IP, remoteIP net.IP) *Receiver {
+	return &Receiver{localIP: localIP, remoteIP: remoteIP}
 }
 
-func (sender Sender) Receive() {
-	udpAddr, _ := net.ResolveUDPAddr("udp", "239.69.128.213:"+strconv.Itoa(aes67Port))
+func (receiver Receiver) Receive() {
+	udpAddr := &net.UDPAddr{IP: receiver.remoteIP, Port: aes67Port}
 	var err error
 	connect, err = net.ListenMulticastUDP("udp", nil, udpAddr)
 	if err != nil {
