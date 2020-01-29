@@ -2,7 +2,6 @@ package aes67
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -11,6 +10,8 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
 )
+
+var connect net.Conn
 
 type Sender struct {
 	senderIP         net.IP
@@ -22,7 +23,19 @@ func NewSender(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 }
 
 func (sender Sender) Play(transmitFile string) {
+	dialer := net.Dialer{
+		LocalAddr: &net.UDPAddr{IP: sender.senderIP, Port: aes67Port},
+	}
+	destinationAddr := net.UDPAddr{IP: sender.MulticastAddress.IP, Port: aes67Port}
+	var err error
+	connect, err = dialer.Dial("udp", destinationAddr.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	playFile(transmitFile)
+
+	defer connect.Close()
 }
 
 func playFile(transmitFile string) {
@@ -32,7 +45,7 @@ func playFile(transmitFile string) {
 	file, _ := ioutil.ReadFile(transmitFile)
 	reader := bytes.NewReader(file)
 
-	packetizer := rtp.NewPacketizer(1452, 97, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewRandomSequencer(), 90000)
+	packetizer := rtp.NewPacketizer(156, 97, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewRandomSequencer(), 90000)
 
 	const tickTime = 1 * time.Millisecond
 	t := time.NewTicker(tickTime)
@@ -43,14 +56,15 @@ func playFile(transmitFile string) {
 		if n == 0 {
 			break
 		}
-		packet := packetizer.Packetize(buf, 480)
+		packet := packetizer.Packetize(buf, 48)
 		select {
 		case <-t.C:
-			fmt.Print(packet[0].String())
+			bytes, _ := packet[0].Marshal()
+			connect.Write(bytes)
 		}
 	}
 	elapsed := time.Since(start)
-	log.Printf("Send RTP Packet %s", elapsed)
+	log.Printf("Sent RTP Packet %s", elapsed)
 }
 
 func sendPacket(payload []byte, stamp uint32) {
