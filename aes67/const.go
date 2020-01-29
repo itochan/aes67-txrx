@@ -1,6 +1,6 @@
 package aes67
 
-import "github.com/itochan/GoRTP/src/net/rtp"
+import "net"
 
 const (
 	aes67Port = 5004
@@ -8,7 +8,7 @@ const (
 )
 
 var (
-	rsLocal    *rtp.Session
+	connect    net.Conn
 	localZone  = ""
 	remoteZone = ""
 )

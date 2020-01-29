@@ -11,8 +11,6 @@ import (
 	"github.com/pion/rtp/codecs"
 )
 
-var connect net.Conn
-
 type Sender struct {
 	senderIP         net.IP
 	MulticastAddress net.IPNet
@@ -24,7 +22,7 @@ func NewSender(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 
 func (sender Sender) Play(transmitFile string) {
 	dialer := net.Dialer{
-		LocalAddr: &net.UDPAddr{IP: sender.senderIP, Port: aes67Port},
+		LocalAddr: &net.UDPAddr{IP: sender.senderIP, Port: aes67Port + 50000},
 	}
 	destinationAddr := net.UDPAddr{IP: sender.MulticastAddress.IP, Port: aes67Port}
 	var err error
@@ -59,18 +57,14 @@ func playFile(transmitFile string) {
 		packet := packetizer.Packetize(buf, 48)
 		select {
 		case <-t.C:
-			bytes, _ := packet[0].Marshal()
-			connect.Write(bytes)
+			go sendPacket(packet[0])
 		}
 	}
 	elapsed := time.Since(start)
 	log.Printf("Sent RTP Packet %s", elapsed)
 }
 
-func sendPacket(payload []byte, stamp uint32) {
-	rp := rsLocal.NewDataPacket(stamp)
-	rp.SetPayload(payload[:])
-	rp.SetPayloadType(PCM24)
-	rsLocal.WriteData(rp)
-	rp.FreePacket()
+func sendPacket(packet *rtp.Packet) {
+	bytes, _ := packet.Marshal()
+	connect.Write(bytes)
 }

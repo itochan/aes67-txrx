@@ -2,9 +2,11 @@ package aes67
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"strconv"
 
-	"github.com/itochan/GoRTP/src/net/rtp"
+	"github.com/pion/rtp"
 )
 
 type Receiver struct {
@@ -17,37 +19,31 @@ func NewReceiver(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 }
 
 func (sender Sender) Receive() {
-	local := &net.IPAddr{IP: sender.senderIP}
-	// transmitAddr, _ := net.ResolveIPAddr("ip", sender.MulticastAddress.IP.String())
-	transmitAddr, _ := net.ResolveIPAddr("ip", "239.69.128.194")
+	udpAddr, _ := net.ResolveUDPAddr("udp", "239.69.128.213:"+strconv.Itoa(aes67Port))
+	var err error
+	connect, err = net.ListenMulticastUDP("udp", nil, udpAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	tpLocal, _ := rtp.NewTransportUDP(local, aes67Port, localZone)
-
-	rsLocal = rtp.NewSession(tpLocal, tpLocal)
-
-	rsLocal.AddRemote(&rtp.Address{transmitAddr.IP, aes67Port, aes67Port + 1, remoteZone})
-
-	strLocalIdx, _ := rsLocal.NewSsrcStreamOut(&rtp.Address{local.IP, aes67Port, aes67Port + 1, localZone}, 0, 0)
-	rsLocal.SsrcStreamOutForIndex(strLocalIdx).SetPayloadType(0)
-
-	rsLocal.StartSession()
 	receivePacket()
-	defer rsLocal.CloseRecv()
+
+	defer connect.Close()
 }
 
 func receivePacket() {
-	// Create and store the data receive channel.
-	dataReceiver := rsLocal.CreateDataReceiveChan()
-	var cnt int
+	buffer := make([]byte, 156)
+	packet := &rtp.Packet{}
 
+	var cnt int
 	for {
-		select {
-		case rp := <-dataReceiver: // just get a packet - maybe we add some tests later
-			if (cnt % 50) == 0 {
-				fmt.Printf("Remote receiver got %d packets\n", cnt)
-			}
-			cnt++
-			rp.FreePacket()
+		_, err := connect.Read(buffer)
+		if err != nil {
+			log.Fatal(err)
 		}
+		cnt++
+		packet.Unmarshal(buffer)
+		fmt.Printf("Remote receiver got %d packets\n", cnt)
+		fmt.Print(packet.String())
 	}
 }
