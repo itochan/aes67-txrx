@@ -4,8 +4,8 @@ import (
 	"flag"
 	"net"
 
-	"github.com/itochan/aes67-transmitter/aes67"
-	"github.com/itochan/aes67-transmitter/sap"
+	"github.com/itochan/aes67-txrx/sap"
+	"github.com/itochan/aes67-txrx/aes67"
 )
 
 var (
