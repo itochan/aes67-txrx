@@ -55,5 +55,10 @@ func main() {
 		// start := time.Now()
 		// elapsed := time.Since(start)
 		// log.Printf("Sent RTP Packet %s", elapsed)
+		break
+	case "rxtx":
+		rxtx := aes67.NewRxTx(sap.HostAddress, net.ParseIP(*address), sap.HostAddress, sap.MulticastAddress)
+		rxtx.ReceiveAndSend()
+		break
 	}
 }
