@@ -71,6 +71,7 @@ func playFile(transmitFile string) {
 func sendPacket(packet *rtp.Packet) {
 	bytes, _ := packet.Marshal()
 	_, err := connectTx.Write(bytes)
+	TxCh <- packet.SequenceNumber
 	if err != nil {
 		log.Print(err)
 	}

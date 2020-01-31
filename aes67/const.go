@@ -8,4 +8,7 @@ const (
 var (
 	localZone  = ""
 	remoteZone = ""
+
+	TxCh = make(chan uint16)
+	RxCh = make(chan uint16)
 )

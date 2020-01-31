@@ -47,9 +47,6 @@ func (rxtx RxTx) ReceiveAndSend() {
 }
 
 func receiveAndSendPacket() {
-	// const RTPHeader = 12
-	// const PCM24bit48kHz = 144
-
 	buffer := make([]byte, 156)
 	packet := &rtp.Packet{}
 

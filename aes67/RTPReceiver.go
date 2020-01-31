@@ -44,6 +44,7 @@ func receivePacket() {
 		}
 		cnt++
 		packet.Unmarshal(buffer)
+		RxCh <- packet.SequenceNumber
 		fmt.Printf("Remote receiver got %d packets\n", cnt)
 		fmt.Print(packet.String())
 	}
