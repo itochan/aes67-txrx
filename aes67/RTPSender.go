@@ -72,6 +72,6 @@ func sendPacket(packet *rtp.Packet) {
 	bytes, _ := packet.Marshal()
 	_, err := connectTx.Write(bytes)
 	if err != nil {
-		log.Fatal("Write", err)
+		log.Print(err)
 	}
 }
