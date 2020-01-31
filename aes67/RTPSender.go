@@ -47,7 +47,7 @@ func playFile(transmitFile string) {
 	file, _ := ioutil.ReadFile(transmitFile)
 	reader := bytes.NewReader(file)
 
-	packetizer := rtp.NewPacketizer(RTPHeader+PCM24bit48kHz, PCM24, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewRandomSequencer(), 90000)
+	packetizer := rtp.NewPacketizer(RTPHeader+PCM24bit48kHz, PCM24, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewFixedSequencer(1), 90000)
 
 	const tickTime = 1 * time.Millisecond
 	t := time.NewTicker(tickTime)
