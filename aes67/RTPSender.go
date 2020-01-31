@@ -2,22 +2,16 @@ package aes67
 
 import (
 	"bytes"
-	"github.com/itochan/GoRTP/src/net/rtp"
 	"io/ioutil"
+	"log"
 	"net"
 	"time"
+
+	"github.com/pion/rtp"
+	"github.com/pion/rtp/codecs"
 )
 
-const (
-	aes67Port = 5004
-	PCM24     = 0x61
-)
-
-var (
-	rsLocal    *rtp.Session
-	localZone  = ""
-	remoteZone = ""
-)
+var connectTx net.Conn
 
 type Sender struct {
 	senderIP         net.IP
@@ -29,51 +23,58 @@ func NewSender(senderIP net.IP, multicastAddress net.IPNet) *Sender {
 }
 
 func (sender Sender) Play(transmitFile string) {
-	local := &net.IPAddr{IP: sender.senderIP}
-	transmitAddr, _ := net.ResolveIPAddr("ip", sender.MulticastAddress.IP.String())
+	dialer := net.Dialer{
+		LocalAddr: &net.UDPAddr{IP: sender.senderIP, Port: aes67Port + 50000},
+	}
+	destinationAddr := net.UDPAddr{IP: sender.MulticastAddress.IP, Port: aes67Port}
+	var err error
+	connectTx, err = dialer.Dial("udp", destinationAddr.String())
+	if err != nil {
+		log.Fatal("Dial", err)
+	}
 
-	tpLocal, _ := rtp.NewTransportUDP(local, aes67Port, localZone)
-
-	rsLocal = rtp.NewSession(tpLocal, tpLocal)
-
-	rsLocal.AddRemote(&rtp.Address{transmitAddr.IP, aes67Port, aes67Port + 1, remoteZone})
-
-	strLocalIdx, _ := rsLocal.NewSsrcStreamOut(&rtp.Address{local.IP, aes67Port, aes67Port + 1, localZone}, 0, 0)
-	rsLocal.SsrcStreamOutForIndex(strLocalIdx).SetPayloadType(0)
-
-	rsLocal.StartSession()
 	playFile(transmitFile)
-	defer rsLocal.CloseRecv()
+	time.Sleep(50 * time.Millisecond)
+	defer connectTx.Close()
 }
 
 func playFile(transmitFile string) {
-	stamp := uint32(0)
+	const RTPHeader = 12
+	const PCM24bit48kHz = 144
 
-	const PCM24bit48kHz = 288
 	buf := make([]byte, PCM24bit48kHz)
 
 	file, _ := ioutil.ReadFile(transmitFile)
 	reader := bytes.NewReader(file)
 
+	packetizer := rtp.NewPacketizer(RTPHeader+PCM24bit48kHz, PCM24, 0xC1E0F3FB, &codecs.G722Payloader{}, rtp.NewFixedSequencer(1), 90000)
+
 	const tickTime = 1 * time.Millisecond
 	t := time.NewTicker(tickTime)
+	defer t.Stop()
+
+	start := time.Now()
 	for {
 		n, _ := reader.Read(buf)
 		if n == 0 {
 			break
 		}
+		packet := packetizer.Packetize(buf, 48)
 		select {
 		case <-t.C:
-			go sendPacket(buf, stamp)
-			stamp += 48
+			go sendPacket(packet[0])
 		}
 	}
+	elapsed := time.Since(start)
+	log.Printf("Sent RTP Packet %s", elapsed)
 }
 
-func sendPacket(payload []byte, stamp uint32) {
-	rp := rsLocal.NewDataPacket(stamp)
-	rp.SetPayload(payload[:])
-	rp.SetPayloadType(PCM24)
-	rsLocal.WriteData(rp)
-	rp.FreePacket()
+func sendPacket(packet *rtp.Packet) {
+	bytes, _ := packet.Marshal()
+	_, err := connectTx.Write(bytes)
+	// fmt.Println("Sent SequenceNo:", packet.SequenceNumber)
+	TxCh <- packet.SequenceNumber
+	if err != nil {
+		log.Print(err)
+	}
 }
