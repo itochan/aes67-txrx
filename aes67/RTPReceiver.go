@@ -8,6 +8,8 @@ import (
 	"github.com/pion/rtp"
 )
 
+var connectRx *net.UDPConn
+
 type Receiver struct {
 	localIP  net.IP
 	remoteIP net.IP
@@ -20,14 +22,14 @@ func NewReceiver(localIP net.IP, remoteIP net.IP) *Receiver {
 func (receiver Receiver) Receive() {
 	udpAddr := &net.UDPAddr{IP: receiver.remoteIP, Port: aes67Port}
 	var err error
-	connect, err = net.ListenMulticastUDP("udp", nil, udpAddr)
+	connectRx, err = net.ListenMulticastUDP("udp", nil, udpAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("net.ListenMulticastUDP()", err)
 	}
 
 	receivePacket()
 
-	defer connect.Close()
+	defer connectRx.Close()
 }
 
 func receivePacket() {
@@ -36,9 +38,9 @@ func receivePacket() {
 
 	var cnt int
 	for {
-		_, err := connect.Read(buffer)
+		_, err := connectRx.Read(buffer)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("connect.Read()", err)
 		}
 		cnt++
 		packet.Unmarshal(buffer)

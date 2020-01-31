@@ -11,6 +11,8 @@ import (
 	"github.com/pion/rtp/codecs"
 )
 
+var connectTx net.Conn
+
 type Sender struct {
 	senderIP         net.IP
 	MulticastAddress net.IPNet
@@ -26,14 +28,14 @@ func (sender Sender) Play(transmitFile string) {
 	}
 	destinationAddr := net.UDPAddr{IP: sender.MulticastAddress.IP, Port: aes67Port}
 	var err error
-	connect, err = dialer.Dial("udp", destinationAddr.String())
+	connectTx, err = dialer.Dial("udp", destinationAddr.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Dial", err)
 	}
 
 	playFile(transmitFile)
 
-	defer connect.Close()
+	defer connectTx.Close()
 }
 
 func playFile(transmitFile string) {
@@ -68,5 +70,8 @@ func playFile(transmitFile string) {
 
 func sendPacket(packet *rtp.Packet) {
 	bytes, _ := packet.Marshal()
-	connect.Write(bytes)
+	_, err := connectTx.Write(bytes)
+	if err != nil {
+		log.Fatal("Write", err)
+	}
 }
