@@ -1,7 +1,6 @@
 package aes67
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -45,7 +44,7 @@ func receivePacket() {
 		cnt++
 		packet.Unmarshal(buffer)
 		RxCh <- packet.SequenceNumber
-		fmt.Printf("Remote receiver got %d packets\n", cnt)
-		fmt.Print(packet.String())
+		// fmt.Printf("Remote receiver got %d packets\n", cnt)
+		// fmt.Print(packet.String())
 	}
 }

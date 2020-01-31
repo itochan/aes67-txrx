@@ -1,7 +1,6 @@
 package aes67
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -58,8 +57,8 @@ func receiveAndSendPacket() {
 		}
 		cnt++
 		packet.Unmarshal(buffer)
-		fmt.Printf("Remote receiver got %d packets\n", cnt)
-		fmt.Print(packet.String())
+		// fmt.Printf("Remote receiver got %d packets\n", cnt)
+		// fmt.Print(packet.String())
 
 		sendPacket(packet)
 	}
