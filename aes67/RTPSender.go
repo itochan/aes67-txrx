@@ -2,6 +2,7 @@ package aes67
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -34,7 +35,7 @@ func (sender Sender) Play(transmitFile string) {
 	}
 
 	playFile(transmitFile)
-
+	time.Sleep(50 * time.Millisecond)
 	defer connectTx.Close()
 }
 
@@ -51,6 +52,7 @@ func playFile(transmitFile string) {
 
 	const tickTime = 1 * time.Millisecond
 	t := time.NewTicker(tickTime)
+	defer t.Stop()
 
 	start := time.Now()
 	for {
@@ -71,6 +73,7 @@ func playFile(transmitFile string) {
 func sendPacket(packet *rtp.Packet) {
 	bytes, _ := packet.Marshal()
 	_, err := connectTx.Write(bytes)
+	fmt.Println("Sent SequenceNo:", packet.SequenceNumber)
 	TxCh <- packet.SequenceNumber
 	if err != nil {
 		log.Print(err)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/itochan/aes67-txrx/aes67"
@@ -47,6 +48,7 @@ func main() {
 			log.Printf("Start Transmitter")
 			s := aes67.NewSender(sap.HostAddress, sap.MulticastAddress)
 			s.Play(*transmitFile)
+			time.Sleep(20 * time.Millisecond)
 			close(chEnd)
 		}()
 		go func() {
@@ -56,7 +58,7 @@ func main() {
 			r.Receive()
 		}()
 
-		txRxLog := make([]TxRxLog, 3000)
+		txRxLog := make([]TxRxLog, 30000)
 
 		for {
 			select {
@@ -66,15 +68,35 @@ func main() {
 				txRxLog[rxSequenceNo-1].rxTime = time.Now()
 				txRxLog[rxSequenceNo-1].rtt = txRxLog[rxSequenceNo-1].rxTime.Sub(txRxLog[rxSequenceNo-1].txTime)
 			case <-chEnd:
+				file, err := os.Create(fmt.Sprintf("%s.csv", time.Now()))
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer file.Close()
 				for i, log := range txRxLog {
-					fmt.Printf("%d,%d\n", i+1, log.rtt/time.Nanosecond)
+					line := fmt.Sprintf("%d,%d\n", i+1, log.rtt/time.Nanosecond)
+					file.WriteString(line)
 				}
 				return
 			}
 		}
 	case "rxtx":
 		rxtx := aes67.NewRxTx(sap.HostAddress, net.ParseIP(*address), sap.HostAddress, sap.MulticastAddress)
-		rxtx.ReceiveAndSend()
-		break
+		chEnd := make(chan struct{})
+		go func() {
+			rxtx.ReceiveAndSend()
+			close(chEnd)
+		}()
+
+		for {
+			select {
+			case <-aes67.TxCh:
+				break
+			case <-aes67.RxCh:
+				break
+			case <-chEnd:
+				return
+			}
+		}
 	}
 }
